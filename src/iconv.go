@@ -3,19 +3,20 @@
 //
 package iconv
 
+// #cgo LDFLAGS: -liconv
 // #include <iconv.h>
 // #include <errno.h>
 import "C"
 
 import (
+	"bytes"
 	"io"
 	"unsafe"
-	"bytes"
 	"syscall"
 )
 
-var EILSEQ = syscall.Errno(C.EILSEQ)
-var E2BIG = syscall.Errno(C.E2BIG)
+var EILSEQ = syscall.Errno(int(C.EILSEQ))
+var E2BIG = syscall.Errno(int(C.E2BIG))
 
 const DefaultBufSize = 4096
 
@@ -39,7 +40,7 @@ func (cd Iconv) Close() error {
 
 func (cd Iconv) Conv(b []byte, outbuf []byte) (out []byte, inleft int, err error) {
 
-	outn, inleft, err := cd.Do(b, len(b), outbuf)	
+	outn, inleft, err := cd.Do(b, len(b), outbuf)
 	if err == nil && err != E2BIG {
 		out = outbuf[:outn]
 		return
@@ -61,8 +62,10 @@ func (cd Iconv) ConvString(s string) string {
 
 func (cd Iconv) Do(inbuf []byte, in int, outbuf []byte) (out, inleft int, err error) {
 
-	if in == 0 { return }
-	
+	if in == 0 {
+		return
+	}
+
 	inbytes := C.size_t(in)
 	inptr := &inbuf[0]
 
@@ -79,7 +82,9 @@ func (cd Iconv) Do(inbuf []byte, in int, outbuf []byte) (out, inleft int, err er
 
 func (cd Iconv) DoWrite(w io.Writer, inbuf []byte, in int, outbuf []byte) (inleft int, err error) {
 
-	if in == 0 { return }
+	if in == 0 {
+		return
+	}
 
 	inbytes := C.size_t(in)
 	inptr := &inbuf[0]
@@ -98,4 +103,3 @@ func (cd Iconv) DoWrite(w io.Writer, inbuf []byte, in int, outbuf []byte) (inlef
 
 	return 0, nil
 }
-
